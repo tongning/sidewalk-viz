@@ -22,15 +22,15 @@ for thisfeature in data["features"]:
     feature_type = thisfeature["properties"]["label_type"]
     feature_type_id = FEATURE_TYPE_TO_ID_MAPPING[feature_type]
     # Query the database to figure out which sidewalk id this feature belongs to based on coordinates
-    query = """ SELECT sidewalk_edge_id,ST_Distance(geom,'SRID=4326;POINT(%s %s)'::geometry)
-                FROM sidewalk.sidewalk_edge
+    query = """ SELECT street_edge_id,ST_Distance(geom,'SRID=4326;POINT(%s %s)'::geometry)
+                FROM sidewalk.street_edge
                 ORDER BY
-                sidewalk_edge.geom <->'SRID=4326;POINT(%s %s)'::geometry
+                street_edge.geom <->'SRID=4326;POINT(%s %s)'::geometry
                 LIMIT 1; """
     inputs = (coordinates[0], coordinates[1], coordinates[0], coordinates[1])
     cursor.execute(query, inputs)
-    sidewalk_edge_id = cursor.fetchone()
-    # sidewalk_edge_id[0] now contains the id of the sidewalk edge closest to this point
+    street_edge_id = cursor.fetchone()
+    # street_edge_id[0] now contains the id of the sidewalk edge closest to this point
     # now insert the feature into accessibility_feature table
     query = """ INSERT INTO sidewalk.accessibility_feature (geom, label_type_id, x, y)
                 VALUES (ST_GeomFromText('POINT(%s %s)', 4326), %s, %s, %s) """
@@ -40,9 +40,9 @@ for thisfeature in data["features"]:
     query = "SELECT currval('sidewalk.accessibility_feature_accessibility_feature_id_seq')"
     cursor.execute(query)
     new_feature_id = cursor.fetchone()[0]
-    closest_sidewalk_id = sidewalk_edge_id[0]
-    # Now insert the paired feature id and sidewalk id into sidewalk_edge_accessibility_feature
-    query = """ INSERT INTO sidewalk.sidewalk_edge_accessibility_feature (sidewalk_edge_id, accessibility_feature_id)
+    closest_sidewalk_id = street_edge_id[0]
+    # Now insert the paired feature id and sidewalk id into street_edge_accessibility_feature
+    query = """ INSERT INTO sidewalk.street_edge_accessibility_feature (street_edge_id, accessibility_feature_id)
                 VALUES (%s, %s) """
     inputs = (closest_sidewalk_id, new_feature_id)
     cursor.execute(query, inputs)

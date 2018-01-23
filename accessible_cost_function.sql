@@ -10,14 +10,14 @@ $BODY$WITH allcosts
          FROM   (SELECT Count(*) AS num_curbramps --Count how many curbramps are on this street segment
                  FROM   (SELECT accessibility_feature.accessibility_feature_id,
                                 label_type_id,
-                                sidewalk_edge_id
+                                street_edge_id
                          FROM   sidewalk.accessibility_feature
-                                INNER JOIN sidewalk.sidewalk_edge_accessibility_feature
+                                INNER JOIN sidewalk.street_edge_accessibility_feature
                                         ON
-                sidewalk_edge_accessibility_feature.accessibility_feature_id
+                street_edge_accessibility_feature.accessibility_feature_id
                 =
                 accessibility_feature.accessibility_feature_id) AS foo
-                 WHERE  sidewalk_edge_id = $1
+                 WHERE  street_edge_id = $1
                         AND label_type_id = 1) AS curbramps --feature_type corresponds to the feature_id in fature_types
          UNION
          SELECT num_construction AS count,
@@ -29,20 +29,20 @@ $BODY$WITH allcosts
          FROM   (SELECT Count(*) AS num_construction --Count the number of construction obstacles on the street segment
                  FROM   (SELECT accessibility_feature.accessibility_feature_id,
                                 label_type_id,
-                                sidewalk_edge_id
+                                street_edge_id
                          FROM   sidewalk.accessibility_feature
-                                INNER JOIN sidewalk.sidewalk_edge_accessibility_feature
+                                INNER JOIN sidewalk.street_edge_accessibility_feature
                                         ON
-                sidewalk_edge_accessibility_feature.accessibility_feature_id
+                street_edge_accessibility_feature.accessibility_feature_id
                 =
                 accessibility_feature.accessibility_feature_id) AS foo
-                 WHERE  sidewalk_edge_id = $1
+                 WHERE  street_edge_id = $1
                         AND label_type_id = 2) AS construction --feature_type corresponds to the feature_id in feature_types
          UNION
          (SELECT St_length(St_transform(geom, 3637)), --Finally, add the length of the segment (in meters) to the cost
                  St_length(St_transform(geom, 3637)) as costcontrib
-          FROM   sidewalk.sidewalk_edge AS distance_cost
-          WHERE  sidewalk_edge_id = $1))
+          FROM   sidewalk.street_edge AS distance_cost
+          WHERE  street_edge_id = $1))
 SELECT sum(costcontrib)
 FROM   allcosts; $BODY$
   LANGUAGE sql VOLATILE
