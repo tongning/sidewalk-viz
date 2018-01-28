@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>walkability</title>
+<script>L_PREFER_CANVAS=true</script>
+<link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.6/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.6/mapbox.css' rel='stylesheet' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
+
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+  #score { font-size: 250%; font-weight: 900;}
+  #description { padding-bottom: 15px; }
+  #steps { position:absolute; bottom:0px; width:100%; height: 40px; background:#000; }
+  #steps a {
+      color:#fff;
+      display:inline-block;
+      text-align:center;
+      box-sizing:border-box;
+      max-width:10000px !important;
+  }
+  .button:hover {
+  }
+</style>
+</head>
+<body>
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/turf/v1.3.0/turf.min.js'></script>
+<div id='map'></div>
+<div class='pin-top pad1 dark fill-green'>
+	<div id='description'>Drag the point to calculate the relative walkability of a location</div>
+	<span id='score' class=''></span><span>/100</span>
+</div>
+<div id='steps' class='col12'>
+    <a href='#' class='col6 unround button fill-navy fill-green' id='amenities'>Amenities</a>
+    <a href='#' class='col6 unround button fill-navy' id='pedestrians'>Pedestrians</a>
+</div>
+<script src='node_modules/@turf/point-to-line-distance/index.js'></script>
+<script src='bars.js'></script>
+<script src='libraries.js'></script>
+<script src='metros.js'></script>
+<script src='bikes.js'></script>
+<script src='pharmacies.js'></script>
+<script src='postoffices.js'></script>
+<script src='zipcar.js'></script>
+<script src='schools.js'></script>
+<script src='grocery.js'></script>
+<script src='pedestrians.js'></script>
+<script src='street_network.js'></script>
+<script src='labels.js'></script>
+<script src='labelfilter.js'></script>
+<script src='bundle.js'></script>
+
+</body>
+</html>
