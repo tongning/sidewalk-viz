@@ -1,2 +1,4 @@
 *.geojson
 .vscode
+turftest/node_modules
+*.csv

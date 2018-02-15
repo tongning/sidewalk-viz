@@ -1,4 +1,6 @@
-var PTL = require('@turf/point-to-line-distance');
+
+var turfbuffer = require('turf-buffer');
+var turfwithin = require('turf-within');
 
 L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejkyYm9qbjAwdm8yd3RlaXNtZmN3a3gifQ.Uc9LFNtZpBHYc00cU-tQUA';
 
@@ -11,11 +13,6 @@ var amenitiesActive = true;
 var pedestriansActive = false;
 var debounceWait = 15;
 
-var distances = [
-    { miles: 0.1, decay: 1 },
-    { miles: 0.5, decay: 0.4 },
-    { miles: 0.7, decay: 0.13 }
-];
 
 var SurfaceProblem = L.geoJson(accessibilitylabels, { filter: surfaceProblemFilter }).toGeoJSON();
 
@@ -82,19 +79,19 @@ var amenities = [
     {name: 'bikes', importance: 3, data: SurfaceProblem},
     {name: 'bars', importance: 2.5, data: Other},
     {name: 'zipcar', importance: 3, data: Occlusion},
-    {name: 'libraries', importance: 1, data: NoSidewalk},*/
-    { name: 'schools', importance: 1, data: streets }
+    {name: 'libraries', importance: 1, data: NoSidewalk},
+    { name: 'schools', importance: 1, data: streets }*/
 ];
 
 var accFeatures = [
 
-    { name: 'metros', importance: 6.5, data: CurbRamp },
-    { name: 'grocery', importance: 5, data: NoCurbRamp },
-    { name: 'pharmacies', importance: 4, data: Obstacle },
-    { name: 'bikes', importance: 3, data: SurfaceProblem },
-    { name: 'bars', importance: 2.5, data: Other },
-    { name: 'zipcar', importance: 3, data: Occlusion },
-    { name: 'libraries', importance: 1, data: NoSidewalk }
+    { name: 'CurbRamp', importance: 6.5, data: CurbRamp },
+    { name: 'NoCurbRamp', importance: 5, data: NoCurbRamp },
+    { name: 'Obstacle', importance: 4, data: Obstacle },
+    { name: 'SurfaceProblem', importance: 3, data: SurfaceProblem },
+    { name: 'Other', importance: 2.5, data: Other },
+    { name: 'Occlusion', importance: 3, data: Occlusion },
+    { name: 'NoSidewalk', importance: 1, data: NoSidewalk }
 
 ];
 
@@ -118,12 +115,7 @@ var pt = {
 var ptLayer = L.mapbox.featureLayer().setGeoJSON(pt);
 var amenityLayer = new L.layerGroup().addTo(map);
 
-ptLayer.eachLayer(function (layer) {
-    layer.options.draggable = true;
-    walkability = debounce(walkability, debounceWait)
-    layer.on('drag', walkability);
-});
-ptLayer.addTo(map);
+
 
 walkability();
 
@@ -140,116 +132,55 @@ function walkability() {
         });
     });
 
-    distances.forEach(function (distance) {
-        amenities.forEach(function (amenity) {
-            //console.log("streetsNearMarker amenity");
-            console.log(amenity)
-            var streetsNearMarker = turf.featurecollection(amenity.data.features.filter(function (f) {
-
-                if (PTL(pt, f, { units: 'miles' }) <= distance.miles) {
-                    //console.log("streetsNearMarker a close street");
-                    return true;
-
-                }
-                //console.log("distance is");
-
-                //console.log(PTL(pt, f, {units: 'miles'}));
-                //return true;
-            })
-            );
-
-            var curbRampsNearMarker = turf.featurecollection(CurbRamp.features.filter(function (f) {
-                if (turf.distance(f, pt) <= 0.7) {
-                    return true;
-
-                }
-            })
-            );
-
-            var increment = amenity.importance * (distance.decay)
-            streetsNearMarker.features.forEach(function (street) {
-                /*
-                var curbRampsNearStreet = turf.featurecollection(curbRampsNearMarker.features.filter(function (f) {
-                    console.log("counted curb ramps near a street")
-                    if (PTL(f, street, { units: 'miles' }) <= 0.1) {
-                        return true;
-
-                    }
-                })
-                );
-                */
-                var curbRampsNearStreet = Math.floor(Math.random() * 20);
-                street.properties.score = curbRampsNearStreet;
-
-                //console.log("curbrampsnearstreet");
-                //console.log(curbRampsNearStreet);
-                //if (!street.properties.score || street.properties.score < increment) street.properties.score = increment;
-                //console.log("Score is");
-                //console.log(street.properties.score)
-            });
-            pois.features = pois.features.concat(streetsNearMarker.features);
-            amenity[distance.miles + 'mi'] = streetsNearMarker.features.length
-            score += (amenity[distance.miles + 'mi'] * amenity.importance * distance.decay) / 5;
-        });
-    });
-
-    amenityLayer.clearLayers();
-    amenityLayer = new L.layerGroup().addTo(map);
-    /*
-    L.geoJson(pois, {
-        pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, {
-                radius: feature.properties.score * 4,
-                fillColor: 'yellow',
-                fillOpacity: 1,
-                stroke: false
-            });
-        }
-    }).addTo(amenityLayer);
     
-    */
-    var myStyle = {
-        "color": "#ff7800",
-        "weight": 5,
-        "opacity": 0.65
-    };
-
-    L.geoJson(pois, {
-        style: function (feature, latlng) {
-            var colorFromScore;
-            if (feature.properties.score < 5) {
-                colorFromScore = "#BD0026";
-            } else if (feature.properties.score >= 5 && feature.properties.score < 7) {
-                colorFromScore = "#E31A1C";
-            } else if (feature.properties.score >= 7 && feature.properties.score < 11) {
-                colorFromScore = "#FC4E2A";
-            } else if (feature.properties.score >= 11 && feature.properties.score < 13) {
-                colorFromScore = "#FD8D3C";
-            } else if (feature.properties.score >= 13 && feature.properties.score < 15) {
-                colorFromScore = "#FEB24C";
-            } else if (feature.properties.score >= 115 && feature.properties.score < 118) {
-                colorFromScore = "#FED976";
-            } else {
-                colorFromScore = "#FFEDA0";
-            }
-            return {
-                "color": colorFromScore,
-                "weight": 5,
-                "opacity": 0.65
-            }
-        }
-    }).addTo(amenityLayer);
-
-
     /*
-    L.geoJson(streets, {
-        style: function(feature) {
+    console.log("amenitieszerodatafeatures")
+    console.log(amenities[0].data.features)*/
+    var count = 0
+    obs_counts = [];
+    
+    for (var streetline of streets) {
+            obs_counts.push({'CurbRamp':[0,0,0,0,0],
+                                'NoCurbRamp':[0,0,0,0,0],
+                                'Obstacle': [0,0,0,0,0],
+                                'SurfaceProblem': [0,0,0,0,0],
+                                'Other': [0,0,0,0,0],
+                                'Occlusion': [0,0,0,0,0],
+                                'NoSidewalk': [0,0,0,0,0]
+                                });
+            //var street = turf.featurecollection([turfbuffer(streetline, 0.06, 'miles')]);
+            var street = turfbuffer(streetline, 0.06, 'miles');
+            console.log("streetarea")
+            //console.log(JSON.stringify(street));
+            console.log(street)
+            //var point = turf.point([-90.548630, 14.616599]);
+            //var street = turf.buffer(point, 0.06, {units: 'miles'});
+            count++;
+            //if(count > 10) {
+            //    break
+            //}
             
-                console.log(feature.properties.score);
+            for (var featurecategory of accFeatures) {
+                    count++;
+                    
+                    var featuresinside = turfwithin(featurecategory.data, street);
+                    console.log("found featuresinside. length is ");
+                    console.log(featuresinside.features.length)
+                    console.log(featuresinside)
+                    for (var item of featuresinside.features) {
+                        current_cell_obj = obs_counts[obs_counts.length-1];
+                        current_cell_obj[item.properties.label_type][item.properties.severity-1]++;
+                    }
+            }
+            console.log(obs_counts)
+                
+
             
-        }
-    }).addTo(amenityLayer);
-    */
+   
+    }
+
+
+
 
     if (score > 100) score = 100;
     document.getElementById('score').innerHTML = Math.floor(score);
@@ -289,17 +220,7 @@ function toggleAmenities() {
         ptLayer.clearLayers();
         //turn on amenities
     } else {
-        console.log('adding amenities')
-        amenitiesActive = true;
 
-        ptLayer = L.mapbox.featureLayer().setGeoJSON(pt);
-        ptLayer.eachLayer(function (layer) {
-            layer.options.draggable = true;
-            walkability = debounce(walkability, debounceWait)
-            layer.on('drag', walkability);
-            walkability();
-        });
-        ptLayer.addTo(map);
     }
 }
 
